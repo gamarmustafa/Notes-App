@@ -2,19 +2,18 @@ package com.example.notesapp
 
 import android.app.AlertDialog
 import android.app.Dialog
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.notesapp.databinding.ActivityMainBinding
 import com.example.notesapp.databinding.DialogAddBinding
 import com.example.notesapp.databinding.DialogUpdateBinding
-import com.example.notesapp.databinding.ItemLayoutBinding
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 private var binding: ActivityMainBinding? = null
 
@@ -33,6 +32,9 @@ class MainActivity : AppCompatActivity() {
             noteDao.fetchAllEmployees().collect {
                 val list = ArrayList(it)
                 setUpListOfDataIntoRecyclerView(list, noteDao)
+                if(list.size == 0){
+                    binding?.rvItemsList?.adapter?.notifyDataSetChanged()
+                }
             }
         }
     }
@@ -49,6 +51,7 @@ class MainActivity : AppCompatActivity() {
                 val dateTime = c.time
                 val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
                 val date = sdf.format(dateTime)
+
                 if (note.isNotEmpty()) {
                     lifecycleScope.launch {
                         noteDao.insert(NoteEntity(note = note, date = date))
@@ -67,10 +70,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun setUpListOfDataIntoRecyclerView(
-        employeesList: ArrayList<NoteEntity>,
-        noteDao: NoteDao
-    ) {
+    private fun setUpListOfDataIntoRecyclerView(employeesList: ArrayList<NoteEntity>, noteDao: NoteDao) {
         if (employeesList.isNotEmpty()) {
             val itemAdapter = ItemAdapter(employeesList,
                 { updateId ->
@@ -82,7 +82,11 @@ class MainActivity : AppCompatActivity() {
             )
             binding?.rvItemsList?.layoutManager = LinearLayoutManager(this)
             binding?.rvItemsList?.adapter = itemAdapter
+
+
         }
+
+
     }
 
     private fun updateRecordDialog(id: Int, noteDao: NoteDao) {
@@ -129,6 +133,7 @@ class MainActivity : AppCompatActivity() {
         builder.setPositiveButton("Yes") { dialogInterface, _ ->
             lifecycleScope.launch {
                 noteDao.delete(id)
+
                 Toast.makeText(applicationContext, "Record deleted.", Toast.LENGTH_SHORT).show()
             }
             dialogInterface.dismiss()
