@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.notesapp.databinding.ActivityMainBinding
+import com.example.notesapp.databinding.DialogAddBinding
 import com.example.notesapp.databinding.DialogUpdateBinding
 import com.example.notesapp.databinding.ItemLayoutBinding
 import kotlinx.coroutines.launch
@@ -16,7 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 private var binding: ActivityMainBinding? = null
-private var itemBinding: ItemLayoutBinding? = null
+
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,16 +38,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addRecord(noteDao: NoteDao) {
-        val text = itemBinding?.tvText.toString()
-        val c = Calendar.getInstance()
-        val dateTime = c.time
-        val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-        val date = sdf.format(dateTime)
-        if (text.isNotEmpty()) {
-            lifecycleScope.launch {
-                noteDao.insert(NoteEntity(note = text, date = date))
+        val addDialog = Dialog(this, R.style.Theme_Dialog)
+        addDialog.setCanceledOnTouchOutside(true)
+        val binding = DialogAddBinding.inflate(layoutInflater)
+        addDialog.setContentView(binding.root)
+
+            binding.tvAdd.setOnClickListener {
+                val note = binding?.etAddNote?.text.toString()
+                val c = Calendar.getInstance()
+                val dateTime = c.time
+                val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                val date = sdf.format(dateTime)
+                if (note.isNotEmpty()) {
+                    lifecycleScope.launch {
+                        noteDao.insert(NoteEntity(note = note, date = date))
+                        Toast.makeText(applicationContext, "Record added.", Toast.LENGTH_SHORT).show()
+                        addDialog.dismiss()
+                    }
+                } else {
+                    Toast.makeText(applicationContext, "A note cannot be blank!", Toast.LENGTH_SHORT)
+                        .show()
+                }
             }
-        }
+            binding.tvCancel.setOnClickListener {
+                addDialog.dismiss()
+            }
+            addDialog.show()
+
     }
 
     private fun setUpListOfDataIntoRecyclerView(
